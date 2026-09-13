@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
+import pytest
 
 SPEC = spec_from_file_location(
     "blomster_calculations",
@@ -39,3 +40,48 @@ def test_complete_history_requires_both_ends_of_period() -> None:
     assert calculations.history_is_complete(complete, installation, now)
     assert not calculations.history_is_complete(missing_start, installation, now)
     assert not calculations.history_is_complete(stale_end, installation, now)
+
+
+def test_empty_meter_history_is_rejected() -> None:
+    with pytest.raises(ValueError):
+        calculations.accumulated_meter_total([])
+
+
+def test_multiple_resets_and_zero_do_not_subtract_consumption() -> None:
+    assert calculations.accumulated_meter_total([sample(5, 0), sample(0, 1), sample(2, 2), sample(0, 3), sample(3, 4)]) == 10
+
+
+def test_fractional_readings_and_duplicates_do_not_double_count() -> None:
+    assert calculations.accumulated_meter_total([sample(1.5, 0), sample(1.5, 1), sample(2.25, 2)]) == pytest.approx(2.25)
+
+
+def test_calculation_does_not_reorder_callers_history() -> None:
+    samples = [sample(9, 2), sample(2, 0), sample(5, 1)]
+    before = list(samples)
+    assert calculations.accumulated_meter_total(samples) == 9
+    assert samples == before
+
+
+def test_zero_or_one_sample_cannot_prove_history_completeness() -> None:
+    installation = datetime(2026, 7, 6, tzinfo=timezone.utc)
+    now = installation + timedelta(days=1)
+    assert not calculations.history_is_complete([], installation, now)
+    assert not calculations.history_is_complete([MeterSample(5, now)], installation, now)
+
+
+def test_history_tolerance_is_inclusive_and_one_second_outside_fails() -> None:
+    installation = datetime(2026, 7, 6, tzinfo=timezone.utc)
+    now = installation + timedelta(days=1)
+    start = installation + timedelta(hours=6)
+    end = now - timedelta(hours=6)
+    assert calculations.history_is_complete([MeterSample(0, start), MeterSample(5, end)], installation, now)
+    assert not calculations.history_is_complete([MeterSample(0, start + timedelta(seconds=1)), MeterSample(5, end)], installation, now)
+    assert not calculations.history_is_complete([MeterSample(0, start), MeterSample(5, end - timedelta(seconds=1))], installation, now)
+
+
+def test_custom_history_tolerance_is_respected() -> None:
+    installation = datetime(2026, 7, 6, tzinfo=timezone.utc)
+    now = installation + timedelta(days=1)
+    rows = [MeterSample(0, installation + timedelta(hours=2)), MeterSample(5, now - timedelta(hours=2))]
+    assert calculations.history_is_complete(rows, installation, now, timedelta(hours=2))
+    assert not calculations.history_is_complete(rows, installation, now, timedelta(hours=1))
