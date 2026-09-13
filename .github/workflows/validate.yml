@@ -12,6 +12,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  regression-gate:
+    name: Regressionstester genomförda
+    needs: [tests, hassfest, hacs]
+    if: always()
+    # Ingen checkout eller PR-kod. Fork-spärrarna på den beständiga runnern
+    # kvarstår; skipped får däremot inte räknas som genomförda tester.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Kräv körda och gröna kontroller
+        env:
+          TESTS_RESULT: ${{ needs.tests.result }}
+          HASSFEST_RESULT: ${{ needs.hassfest.result }}
+          HACS_RESULT: ${{ needs.hacs.result }}
+        run: |
+          for result in "$TESTS_RESULT" "$HASSFEST_RESULT" "$HACS_RESULT"; do
+            if [ "$result" != success ]; then
+              echo "::error::Samtliga kontroller måste köras och lyckas: $result"
+              exit 1
+            fi
+          done
   tests:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, linux, x64, shared-ci]
