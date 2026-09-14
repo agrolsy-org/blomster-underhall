@@ -2,7 +2,8 @@
 
 `.github/workflows/validate.yml` kör på push till main och PR. Tre GitHub-hostade
 Ubuntu-jobb kör Python3.13/compileall/pytest, Hassfest respektive HACS:s integration-
-validering. `.github/workflows/security-audit.yml` kör Gitleaks med redigerad output
+validering. Mergeskyddets check Regressionstester genomförda beror på det faktiska
+pytest-jobbet och blir röd även om det jobbet avbryts eller hoppas över. `.github/workflows/security-audit.yml` kör Gitleaks med redigerad output
 på hela Git-historiken vid PR, manuellt och den4:e varje månad02:17UTC. Dessa kontroller
 är inte en full säkerhetsanalys av behörigheter eller en HA-integrationstestmiljö.
 

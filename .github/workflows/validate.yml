@@ -29,6 +29,23 @@ jobs:
       - run: python -m compileall -q custom_components
       - run: pytest -q
 
+  regression-resultat:
+    name: Regressionstester genomförda
+    needs: tests
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Kräv godkänt faktiskt testjobb
+        env:
+          TEST_RESULT: ${{ needs.tests.result }}
+        run: |
+          if [ "$TEST_RESULT" != "success" ]; then
+            echo "Regressionstestjobbet är inte godkänt: $TEST_RESULT" >&2
+            exit 1
+          fi
+          echo "Pytest-jobbet för denna commit är godkänt."
+
   hassfest:
     runs-on: ubuntu-latest
     timeout-minutes: 10
