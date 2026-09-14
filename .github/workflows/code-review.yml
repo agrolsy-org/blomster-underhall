@@ -1,34 +1,55 @@
 name: Kodgranskning
-
 on:
   workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main]
-  pull_request_review:
-    types: [submitted, dismissed]
   issue_comment:
     types: [created, edited, deleted]
-
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
+  issues: read
+  pull-requests: read
   statuses: write
-
+concurrency:
+  group: public-code-review
+  cancel-in-progress: false
 jobs:
   gate:
-    uses: agrolsy-org/wp-plugin-ci/.github/workflows/code-review-gate.yml@v1
-
-  reserve-review:
-    needs: gate
-    if: needs.gate.outputs.manual_prs != '' && needs.gate.outputs.manual_prs != '[]'
-    strategy:
-      fail-fast: false
-      matrix:
-        pr: ${{ fromJSON(needs.gate.outputs.manual_prs) }}
-    uses: agrolsy-org/wp-plugin-ci/.github/workflows/codex-review.yml@v1
-    with:
-      pr: ${{ format('{0}', matrix.pr) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Ingen checkout eller körning av PR-kod; endast GitHubs API.
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            const number = context.payload.pull_request?.number
+              || (context.payload.issue?.pull_request ? context.payload.issue.number : null);
+            if (context.eventName === 'issue_comment' && !number) return;
+            const prs = number
+              ? [(await github.rest.pulls.get({owner, repo, pull_number: number})).data]
+              : await github.paginate(github.rest.pulls.list, {owner, repo, state: 'open', base: 'main', per_page: 100});
+            for (const pr of prs) {
+              if (pr.state !== 'open' || pr.draft || pr.base.ref !== 'main') continue;
+              const sha = pr.head.sha;
+              const marker = `<!-- manual-review:${sha} -->`;
+              const comments = await github.paginate(github.rest.issues.listComments,
+                {owner, repo, issue_number: pr.number, per_page: 100});
+              let review;
+              for (const comment of comments) {
+                if (comment.user?.type === 'Bot' || !comment.user?.login
+                  || !comment.body.split(/\r?\n/).some(line => line.trim() === marker)) continue;
+                const permission = (await github.rest.repos.getCollaboratorPermissionLevel(
+                  {owner, repo, username: comment.user.login})).data.permission;
+                if (['admin', 'maintain', 'write'].includes(permission)) { review = comment; break; }
+              }
+              const current = (await github.rest.pulls.get({owner, repo, pull_number: pr.number})).data;
+              if (current.head.sha !== sha || current.state !== 'open') continue;
+              await github.rest.repos.createCommitStatus({owner, repo, sha, context: 'Kodgranskning',
+                state: review ? 'success' : 'pending',
+                description: review ? 'Aktuell commit manuellt granskad' : 'Väntar på granskning av aktuell commit',
+                target_url: review?.html_url || pr.html_url});
+            }
