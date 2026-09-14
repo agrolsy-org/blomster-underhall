@@ -2,26 +2,28 @@
 
 En egen Home Assistant-integration för husets underhåll, servicehistorik och mätarbaserade påminnelser.
 
-## CI och lokal reservkörning
+## Dokumentation och kontroller
 
-Validerings- och säkerhetsjobben körs på den isolerade HP/CI-VM:ns repo-specifika
-runner `blomster-underhall-ci`. Runnern delar endast versionsstyrda programfiler med
-övriga runners; credentials, etiketter, loggar och arbetskatalog är repo-specifika. Ett
-VM-globalt jobblås hindrar att flera repon överbelastar maskinen samtidigt.
-Eftersom repot är publikt körs self-hosted-jobben bara för brancher i originalrepot;
-kod från fork-PR:er körs inte på den beständiga VM:n utan måste verifieras lokalt innan
-den tas in på en intern branch.
+- [Arkitektur och requestflöden](docs/architecture.md)
+- [Lagringsformat, kompatibilitet och återställning](docs/storage.md)
+- [Åtkomst och tjänstekontrakt](docs/access.md)
+- [CI, månadsgranskning och manuell reservgranskning](docs/ci.md)
 
-Om GitHub Actions eller runnern är otillgänglig körs grundkontrollerna lokalt:
+Validering och secretskanning körs på GitHub-hostade `ubuntu-latest`, även för
+fork-PR:er, utan installationshemligheter eller åtkomst till hemnets Home Assistant.
+Den månatliga AI-granskningen och dagliga bevakningen av den ligger centralt i det
+privata repot `agrolsy-org/wp-plugin-ci`; datorn som används för utveckling behöver
+inte vara på. Runnern för månadsgranskningen finns på Sambandscentralen.
+
+Lokal reservkörning:
 
 ```bash
 python -m compileall -q custom_components
 python -m pytest -q
 ```
 
-Hassfest- och HACS-kontrollerna kör containerbaserade actions i CI. En manuell
-reservkörning ska därför redovisas uttryckligen i PR:n om dessa två kontroller inte har
-kunnat köras lokalt.
+Hassfest och HACS kör containerbaserade actions i CI. Om dessa inte har körts ska
+den manuella leveransavstämningen säga det uttryckligen.
 
 Version 0.7.0 hanterar bland annat:
 
