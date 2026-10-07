@@ -1,9 +1,15 @@
 # CI och schemaläggning
 
-`.github/workflows/validate.yml` kör på push till main och PR. Tre GitHub-hostade
-Ubuntu-jobb kör Python3.13/compileall/pytest, Hassfest respektive HACS:s integration-
-validering. Mergeskyddets check Regressionstester genomförda beror på det faktiska
-pytest-jobbet och blir röd även om det jobbet avbryts eller hoppas över. `.github/workflows/security-audit.yml` kör Gitleaks med redigerad output
+`.github/workflows/validate.yml` kör på push till main och PR. Fyra GitHub-hostade
+Ubuntu-jobb ingår, var och en för sig:
+
+- `tests`: Python 3.13, compileall och pytest.
+- `regression-resultat`: mergeskyddets check Regressionstester genomförda.
+- `hassfest`: Home Assistants hassfest.
+- `hacs`: HACS:s integrationsvalidering.
+
+Mergeskyddets check Regressionstester genomförda beror på det faktiska
+pytest-jobbet (`tests`) och blir röd även om det jobbet avbryts eller hoppas över. `.github/workflows/security-audit.yml` kör Gitleaks med redigerad output
 på hela Git-historiken vid PR, manuellt och den4:e varje månad02:17UTC. Dessa kontroller
 är inte en full säkerhetsanalys av behörigheter eller en HA-integrationstestmiljö.
 
@@ -41,3 +47,26 @@ En separat daglig GitHub-hostad watchdog bevakar misslyckade/uteblivna körninga
 
 Ändringar här startar inte om HA, installerar inte integrationen och bevisar inte att
 en verklig backup, uppgradering eller frontend har testats på hemnets installation.
+
+## Release och versionssynkning
+
+Versionen finns på tre ställen som alltid ska vara lika:
+
+- `version` i `custom_components/blomster_maintenance/manifest.json`
+- `?v=` i `CARD_URL` i `custom_components/blomster_maintenance/frontend.py` (cache-bust för kortet)
+- raden `Version X.Y.Z hanterar bland annat` i `README.md` samt versionen i `docs/architecture.md`
+
+`tests/test_release_contract.py` läser dessa värden och körs av pytest-jobbet, så en
+osynkad version gör PR:n röd. Kontrollen ändrar inget.
+
+Checklista vid release:
+
+1. Höj versionen på alla tre ställen i samma PR och uppdatera dokumentationsversionen.
+2. Vänta på gröna checkar (pytest, hassfest, hacs, kodgranskning) och merga till main.
+3. Skapa en tagg `vX.Y.Z` på merge-commiten och en GitHub-release med samma namn. HACS
+   läser releaser från repot; utan release visar HACS standardgrenens senaste commit.
+4. Uppdatera i HACS på hemmets HA, starta om HA och hård-ladda webbläsaren så att det
+   nya `?v=` hämtar kortet. Kontrollera Store, entiteter och kortet.
+5. Återställning: publicera en ny patchrelease som återställer föregående kod med ny
+   version (även `?v=`, annars behåller webbläsaren det cachade kortet). Ta aldrig bort
+   eller flytta en publicerad tagg. Lagringsformatet beskrivs i `docs/storage.md`.

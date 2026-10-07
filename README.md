@@ -63,11 +63,18 @@ Mätaren installerades den 6 juli 2026, men Home Assistant saknar hela historike
 14 839 L
 ```
 
-Efter installation ska tjänsten `blomster_maintenance.set_water_baseline` köras en gång med `14839`. Tjänsten sparar samtidigt Grohes aktuella dagsvärde så att dagens förbrukning inte dubbelräknas.
+Efter installation kan tjänsten `blomster_maintenance.set_water_baseline` köras med `14839`, men bara om ingen baslinje redan finns. Tjänsten sparar samtidigt Grohes aktuella dagsvärde så att dagens förbrukning inte dubbelräknas.
 
-Om Recorder har komplett historik från installationsdatum till nutid försöker
-integrationen i stället bygga baslinjen automatiskt. Luckig eller gammal
-historik avvisas. Fram tills en säker Recorder-import eller manuell baslinje
+Varning: tjänsten skriver alltid över den sparade totalen och rensar importflaggan, även om setup redan har etablerat en aktuell total från Recorder. Kontrollera därför först att `sensor.ackumulerad_vattenforbrukning` är otillgänglig (baslinje saknas). Om sensorn redan visar ett värde, jämför det med Grohe-appens aktuella total innan du kör tjänsten. Repositoryt kan inte verifiera att 14839 fortfarande är rätt vid körningstillfället.
+
+Om Recorder har historik från installationsdatum till nutid försöker
+integrationen i stället bygga baslinjen automatiskt. Kontrollen gäller endast
+ändpunktstäckning: första provet måste ligga högst 6 timmar efter installationsdatum,
+sista provet högst 6 timmar före nu, och minst två prover krävs. Interna luckor
+mellan dessa prover kontrolleras inte, så en importerad total kan underskatta
+förbrukningen om Recorder saknar data mitt i perioden. Jämför den importerade totalen
+med Grohe-appen och sätt vid behov baslinjen manuellt. Historik som saknar början
+eller slut avvisas. Fram tills en säker Recorder-import eller manuell baslinje
 finns är totalsensorn otillgänglig i stället för att visa ett falskt `0 L`.
 
 Integrationen skapar:

@@ -32,7 +32,10 @@ def history_is_complete(
     now: datetime,
     tolerance: timedelta = timedelta(hours=6),
 ) -> bool:
-    """Require coverage from installation until recently before trusting import."""
+    """Require samples near both ends of the period before trusting import.
+
+    Only endpoint coverage is checked; gaps between the samples are not detected.
+    """
     ordered = sorted(samples, key=lambda sample: sample.recorded_at)
     return bool(
         len(ordered) >= 2

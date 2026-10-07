@@ -1,6 +1,6 @@
 set_water_baseline:
   name: Ange vattenbaslinje
-  description: Sätter korrekt ackumulerad vattenförbrukning och sparar dagens aktuella källvärde.
+  description: Sätter korrekt ackumulerad vattenförbrukning och sparar dagens aktuella källvärde. Skriver över en befintlig total, även en som importerats från Recorder.
   fields:
     baseline_liters:
       name: Baslinje
