@@ -33,7 +33,8 @@ flowchart TD
 ```
 
 `water.py` importerar Recorder-data i executor och godtar endast historik som täcker
-periodens början och slut enligt `calculations.history_is_complete`. Vid ofullständig
+periodens början och slut enligt `calculations.history_is_complete`. Kontrollen gäller
+ändpunkter; interna luckor i serien upptäcks inte. Vid ofullständig
 historik behövs en manuellt satt baslinje. Därefter följer en state-listener aktuell
 källa; en lägre dagsmätare räknas som återställning, inte negativ förbrukning.
 
