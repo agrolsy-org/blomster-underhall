@@ -13,4 +13,6 @@ try:
 except ImportError:
     pytest_plugins = []
 else:
-    pytest_plugins = ["pytest_homeassistant_custom_component.plugins"]
+    # Paketet registrerar sin plugin via pytest-entrypoint. Explicit registrering
+    # här skulle ladda samma modul två gånger i CI.
+    pytest_plugins = []
