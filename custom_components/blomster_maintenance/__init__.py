@@ -47,6 +47,7 @@ from .const import (
     SERVICE_SET_WATER_BASELINE,
 )
 from .frontend import async_setup_frontend
+from .permissions import async_require_admin
 from .sensor import _state_hours
 from .storage import MaintenanceStore
 from .water import async_import_water_history, async_start_water_tracking
@@ -136,6 +137,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.async_on_unload(remove_listener)
 
     async def set_water_baseline(call: ServiceCall) -> None:
+        await async_require_admin(hass, call)
         state = hass.states.get(store.water.source_entity) if store.water.source_entity else None
         current_value = None
         if state and state.state not in {"unknown", "unavailable"}:
@@ -147,6 +149,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.bus.async_fire(EVENT_WATER_UPDATED)
 
     async def configure_item(call: ServiceCall) -> None:
+        await async_require_admin(hass, call)
         item_id = call.data[ATTR_ITEM_ID]
         await store.async_configure_item(
             item_id=item_id,
@@ -156,6 +159,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.bus.async_fire(EVENT_MAINTENANCE_UPDATED, {"item_id": item_id, "action": "configured"})
 
     async def record_maintenance(call: ServiceCall) -> dict[str, str]:
+        await async_require_admin(hass, call)
         meter_entity = call.data.get(ATTR_METER_ENTITY)
         if not meter_entity:
             configured = store.items.get(call.data[ATTR_ITEM_ID])
@@ -185,18 +189,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return {"item_id": item_id, "event_id": event.event_id}
 
     async def delete_maintenance(call: ServiceCall) -> None:
+        await async_require_admin(hass, call)
         item_id = call.data[ATTR_ITEM_ID]
         event_id = call.data[ATTR_EVENT_ID]
         if not await store.async_delete_event(item_id, event_id):
             raise HomeAssistantError("Underhållsposten finns inte längre")
         hass.bus.async_fire(EVENT_MAINTENANCE_UPDATED, {"item_id": item_id, "event_id": event_id, "action": "deleted"})
 
-    async def import_water_history(_call: ServiceCall) -> None:
+    async def import_water_history(call: ServiceCall) -> None:
+        await async_require_admin(hass, call)
         if not await async_import_water_history(hass, store):
             raise HomeAssistantError("Recorder-historiken täcker inte hela perioden; ange en manuell baslinje")
         hass.bus.async_fire(EVENT_WATER_UPDATED)
 
     async def acknowledge_maintenance(call: ServiceCall) -> None:
+        await async_require_admin(hass, call)
         from .sensor import _item_problem_signature
 
         item_id = call.data[ATTR_ITEM_ID]

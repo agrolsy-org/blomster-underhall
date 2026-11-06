@@ -6,16 +6,15 @@ HA-användare ska alltså kunna se panelen. Panelens synlighet är inte en behö
 för dess tjänster. Befintliga dashboards behåller sina egna inställningar.
 
 Integrationens sex tjänster registreras med `hass.services.async_register` i
-`__init__.py`. De har ingen egen kontroll av `call.context.user_id`, adminstatus eller
-entitetsbehörighet. De är därför inte adminbegränsade eller ett separat skrivskydd för
-läsanvändare. HA:s autentisering för webb-/WebSocket-anrop finns kvar; lokala automationer
-kan också anropa tjänster utan användarkontext. Döljning av knappar eller sidebar ändrar
-inte denna gräns. Detta är nuvarande delade hushållskontrakt, inte en garanti om separata
-roller. Använd inte integrationen för data som måste isoleras mellan HA-användare.
+`__init__.py`. Alla användarinitierade anrop går först genom
+`permissions.async_require_admin`: användaren hämtas från `call.context.user_id`, okända
+användare nekas och endast administratörer får fortsätta. Lokala automationer och andra
+interna HA-anrop utan användarkontext tillåts för att befintliga automatiseringar ska
+fortsätta fungera. Panelens synlighet ger alltså inte vanliga användare skrivrättighet.
 
 HA:s [officiella behörighetsdokumentation](https://developers.home-assistant.io/docs/auth_permissions/)
-beskriver att egna tjänstehanterare behöver uttryckliga kontroller om admin- eller
-entitetsbegränsning önskas. Ingen sådan rolländring införs av denna dokumentationsfix.
+beskriver samma modell: interna anrop kan sakna användarkontext, medan anrop med användare
+måste kontrollera rollen uttryckligen.
 
 | Tjänst i blomster_maintenance | Invariant/effekt |
 | --- | --- |

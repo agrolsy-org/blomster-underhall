@@ -25,6 +25,10 @@ python -m pytest -q
 Hassfest och HACS kör containerbaserade actions i CI. Om dessa inte har körts ska
 den manuella leveransavstämningen säga det uttryckligen.
 
+Version 0.7.1 hanterar administratörsbehörighet för användarinitierade anrop till
+integrationens skrivande tjänster. Interna Home Assistant-automationer utan
+användarkontext fortsätter fungera.
+
 Version 0.7.0 hanterar bland annat:
 
 - egen beständig total för vattenförbrukning

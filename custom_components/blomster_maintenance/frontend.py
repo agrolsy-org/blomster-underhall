@@ -11,7 +11,7 @@ from homeassistant.exceptions import HomeAssistantError
 
 _LOGGER = logging.getLogger(__name__)
 
-CARD_URL = "/blomster_maintenance/blomster-maintenance-card.js?v=0.7.0"
+CARD_URL = "/blomster_maintenance/blomster-maintenance-card.js?v=0.7.1"
 CARD_URL_BASE = "/blomster_maintenance/blomster-maintenance-card.js"
 DASHBOARD_URL_PATH = "blomster-underhall"
 DASHBOARD_TITLE = "Blomster Underhåll"
