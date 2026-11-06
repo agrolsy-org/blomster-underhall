@@ -87,6 +87,9 @@ async def test_setup_preserves_metadata_registers_services_and_unloads(hass):
         assert store.items["luba_blades"].warning_entities == ["binary_sensor.external_warning"]
         assert SERVICES == {name for name in SERVICES if hass.services.has_service(DOMAIN, name)}
 
+        # Home Assistant gör det första kontot till ägare oavsett grupp. Skapa
+        # därför ägaren först och testa därefter ett verkligt read-only-konto.
+        await hass.auth.async_create_user("owner")
         non_admin = await hass.auth.async_create_user("non-admin", group_ids=[GROUP_ID_READ_ONLY])
         assert not non_admin.is_admin
         for service, payload in SERVICE_PAYLOADS.items():
