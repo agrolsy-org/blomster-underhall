@@ -1,0 +1,9 @@
+{
+  "source_repository": "agrolsy-org/wp-plugin-ci",
+  "workflow_path": ".github/workflows/monthly-public-review.yml",
+  "source_repository_visibility": "private",
+  "reviewed_repository": "agrolsy-org/blomster-underhall",
+  "last_known_schedule": "external; verify in source workflow",
+  "runner_and_watchdog": "external; not verified by this repository",
+  "status_verification": "check current source workflow run and report against the reviewed main SHA"
+}

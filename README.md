@@ -11,9 +11,9 @@ En egen Home Assistant-integration för husets underhåll, servicehistorik och m
 
 Validering och secretskanning körs på GitHub-hostade `ubuntu-latest`, även för
 fork-PR:er, utan installationshemligheter eller åtkomst till hemnets Home Assistant.
-Den månatliga AI-granskningen och dagliga bevakningen av den ligger centralt i det
-privata repot `agrolsy-org/wp-plugin-ci`; datorn som används för utveckling behöver
-inte vara på. Runnern för månadsgranskningen finns på Sambandscentralen.
+Den månatliga granskningen är ett externt kontrakt i det privata repot
+`agrolsy-org/wp-plugin-ci`. Aktuell körning, runner och rapport måste verifieras där;
+det här repot intygar inte live-status.
 
 Lokal reservkörning:
 
@@ -25,7 +25,7 @@ python -m pytest -q
 Hassfest och HACS kör containerbaserade actions i CI. Om dessa inte har körts ska
 den manuella leveransavstämningen säga det uttryckligen.
 
-Version 0.7.1 hanterar administratörsbehörighet för användarinitierade anrop till
+Version 0.7.2 hanterar administratörsbehörighet för användarinitierade anrop till
 integrationens skrivande tjänster. Interna Home Assistant-automationer utan
 användarkontext fortsätter fungera.
 
