@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.14.2"
       - run: pip install -r requirements-test.txt
       - run: python -m compileall -q custom_components
       - run: pytest -q
