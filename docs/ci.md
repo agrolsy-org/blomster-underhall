@@ -38,12 +38,13 @@ granskning. Merge kräver avstämning av alla aktuella checkar, inklusive Kodgra
 
 ## Månadsgranskning
 
-Schemat finns i det privata repot `agrolsy-org/wp-plugin-ci`, i
-`.github/workflows/monthly-public-review.yml`. Workflowet hämtar publika
-källans main läsande och kör den gemensamma AI-granskningen på `org-codex-review` på
-Sambandscentralen. GitHub äger cronstarten; utvecklarens dator behöver inte vara på.
-Findings och rapporter finns i det privata core-repot, med källrepo/SHA i rapporten.
-En separat daglig GitHub-hostad watchdog bevakar misslyckade/uteblivna körningar.
+Senast kända externa konfiguration finns i det privata repot
+`agrolsy-org/wp-plugin-ci`, i `.github/workflows/monthly-public-review.yml`, och
+sammanfattas utan hemligheter i `.github/monthly-review-attestation.json`. Den här
+kopian kan inte verifiera aktuellt schema, runner, watchdog, rapportleverans eller
+att en körning faktiskt har skett. Driftstatus kontrolleras i core-repots aktuella
+workflowkörning och rapport, med källrepo och granskad SHA, innan en månadsgranskning
+betraktas som genomförd. Attesten uppdateras när det versionsstyrda kontraktet ändras.
 
 Ändringar här startar inte om HA, installerar inte integrationen och bevisar inte att
 en verklig backup, uppgradering eller frontend har testats på hemnets installation.

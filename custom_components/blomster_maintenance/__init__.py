@@ -88,6 +88,11 @@ DELETE_SCHEMA = vol.Schema({vol.Required(ATTR_ITEM_ID): cv.string, vol.Required(
 ACKNOWLEDGE_SCHEMA = vol.Schema({vol.Required(ATTR_ITEM_ID): cv.string})
 
 
+async def _async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Apply saved options to listeners and entities without a HA restart."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not hass.data.get(CARD_REGISTERED):
         await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(CARD_PATH), False)])
@@ -107,26 +112,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     blade_interval = _state_hours(hass, blade_warning_entity)
     if blade_interval is None:
         blade_interval = float(entry.options.get(CONF_BLADE_INTERVAL_HOURS, entry.data[CONF_BLADE_INTERVAL_HOURS]))
+    blade = store.items.get("luba_blades")
     await store.async_configure_item(
         item_id="luba_blades",
-        name="Luba-knivar",
+        name=blade.name if blade else "Luba-knivar",
         interval_type="hours",
         interval_value=blade_interval,
         meter_entity=entry.options.get(CONF_BLADE_USAGE_ENTITY, entry.data[CONF_BLADE_USAGE_ENTITY]),
-        warning_entities=[],
     )
-    await store.async_configure_item(
-        item_id="water_filter",
-        name="Vattenfilter kol",
-        meter_entity="sensor.ackumulerad_vattenforbrukning",
-        warning_entities=[],
-    )
-    await store.async_configure_item(
-        item_id="water_filter_cotton",
-        name="Vattenfilter bomull",
-        meter_entity="sensor.ackumulerad_vattenforbrukning",
-        warning_entities=[],
-    )
+    if "water_filter" not in store.items:
+        await store.async_configure_item(
+            item_id="water_filter",
+            name="Vattenfilter kol",
+            meter_entity="sensor.ackumulerad_vattenforbrukning",
+        )
+    if "water_filter_cotton" not in store.items:
+        await store.async_configure_item(
+            item_id="water_filter_cotton",
+            name="Vattenfilter bomull",
+            meter_entity="sensor.ackumulerad_vattenforbrukning",
+        )
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = store
 
     if not store.water.baseline_established:
@@ -225,11 +230,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         supports_response=SupportsResponse.OPTIONAL,
     )
     hass.services.async_register(DOMAIN, SERVICE_DELETE_MAINTENANCE, delete_maintenance, schema=DELETE_SCHEMA)
-    hass.services.async_register(DOMAIN, SERVICE_IMPORT_WATER_HISTORY, import_water_history)
+    hass.services.async_register(DOMAIN, SERVICE_IMPORT_WATER_HISTORY, import_water_history, schema=vol.Schema({}))
     hass.services.async_register(DOMAIN, SERVICE_ACKNOWLEDGE_MAINTENANCE, acknowledge_maintenance, schema=ACKNOWLEDGE_SCHEMA)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await async_setup_frontend(hass)
+    entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
     return True
 
 
