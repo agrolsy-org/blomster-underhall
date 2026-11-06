@@ -1,4 +1,5 @@
 from datetime import date
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -45,6 +46,9 @@ SERVICES = {
 
 @pytest.mark.usefixtures("enable_custom_integrations")
 async def test_setup_preserves_metadata_registers_services_and_unloads(hass):
+    # Home Assistants lätta test-fixture startar inte HTTP-komponenten. Ge
+    # integrationen samma minimala gränsyta som den får från HA i drift.
+    hass.http = SimpleNamespace(async_register_static_paths=AsyncMock())
     entry = MockConfigEntry(domain=DOMAIN, data=ENTRY_DATA, options={})
     entry.add_to_hass(hass)
     saved_item = MaintenanceItem(
