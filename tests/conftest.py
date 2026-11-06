@@ -7,3 +7,10 @@ import sys
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
+
+try:
+    import pytest_homeassistant_custom_component  # noqa: F401
+except ImportError:
+    pytest_plugins = []
+else:
+    pytest_plugins = ["pytest_homeassistant_custom_component.common"]
