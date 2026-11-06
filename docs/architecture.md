@@ -1,6 +1,6 @@
 # Arkitektur
 
-Dokumentationsversion: 2026-09-14.1. Avstämd mot integration 0.7.0.
+Dokumentationsversion: 2026-11-06.1. Avstämd mot integration 0.7.1.
 
 `config_flow.py` skapar en konfigurationspost med vattenkälla, installationsdatum
 samt Luba-entiteter. `__init__.py::async_setup_entry` registrerar kortets statiska
