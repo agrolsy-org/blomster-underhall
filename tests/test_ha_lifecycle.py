@@ -34,6 +34,14 @@ ENTRY_DATA = {
     CONF_BLADE_WARNING_ENTITY: "sensor.blade_limit",
     CONF_BLADE_INTERVAL_HOURS: 150,
 }
+
+SERVICE_PAYLOADS = {
+    SERVICE_SET_WATER_BASELINE: {"baseline_liters": 0},
+    SERVICE_CONFIGURE_ITEM: {"item_id": "test_item", "name": "Test"},
+    SERVICE_RECORD_MAINTENANCE: {"item_id": "test_item", "name": "Test"},
+    SERVICE_DELETE_MAINTENANCE: {"item_id": "test_item", "event_id": "test_event"},
+    SERVICE_ACKNOWLEDGE_MAINTENANCE: {"item_id": "test_item"},
+}
 SERVICES = {
     SERVICE_SET_WATER_BASELINE,
     SERVICE_CONFIGURE_ITEM,
@@ -77,9 +85,9 @@ async def test_setup_preserves_metadata_registers_services_and_unloads(hass):
         assert store.items["luba_blades"].warning_entities == ["binary_sensor.external_warning"]
         assert SERVICES == {name for name in SERVICES if hass.services.has_service(DOMAIN, name)}
 
-        for service in SERVICES - {SERVICE_IMPORT_WATER_HISTORY}:
+        for service, payload in SERVICE_PAYLOADS.items():
             with pytest.raises(ServiceValidationError):
-                await hass.services.async_call(DOMAIN, service, {}, blocking=True)
+                await hass.services.async_call(DOMAIN, service, payload, blocking=True)
 
         assert await async_unload_entry(hass, entry)
         assert DOMAIN not in hass.data or entry.entry_id not in hass.data[DOMAIN]
