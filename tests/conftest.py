@@ -13,4 +13,4 @@ try:
 except ImportError:
     pytest_plugins = []
 else:
-    pytest_plugins = ["pytest_homeassistant_custom_component.common"]
+    pytest_plugins = ["pytest_homeassistant_custom_component.plugins"]
