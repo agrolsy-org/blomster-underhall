@@ -7,6 +7,7 @@ pytest.importorskip("homeassistant")
 pytest.importorskip("pytest_homeassistant_custom_component")
 
 from homeassistant.exceptions import ServiceValidationError
+from homeassistant.core import Context
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.blomster_maintenance import async_setup_entry, async_unload_entry
@@ -85,9 +86,16 @@ async def test_setup_preserves_metadata_registers_services_and_unloads(hass):
         assert store.items["luba_blades"].warning_entities == ["binary_sensor.external_warning"]
         assert SERVICES == {name for name in SERVICES if hass.services.has_service(DOMAIN, name)}
 
+        non_admin = await hass.auth.async_create_user("non-admin")
         for service, payload in SERVICE_PAYLOADS.items():
             with pytest.raises(ServiceValidationError):
-                await hass.services.async_call(DOMAIN, service, payload, blocking=True)
+                await hass.services.async_call(
+                    DOMAIN,
+                    service,
+                    payload,
+                    blocking=True,
+                    context=Context(user_id=non_admin.id),
+                )
 
         assert await async_unload_entry(hass, entry)
         assert DOMAIN not in hass.data or entry.entry_id not in hass.data[DOMAIN]
