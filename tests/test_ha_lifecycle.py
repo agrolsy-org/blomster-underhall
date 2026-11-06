@@ -63,7 +63,6 @@ async def test_setup_preserves_metadata_registers_services_and_unloads(hass):
         patch("custom_components.blomster_maintenance.async_import_water_history", new=AsyncMock(return_value=True)),
         patch("custom_components.blomster_maintenance.async_start_water_tracking", new=AsyncMock(return_value=lambda: None)),
         patch("custom_components.blomster_maintenance.async_setup_frontend", new=AsyncMock()),
-        patch.object(hass.http, "async_register_static_paths", new=AsyncMock()),
         patch.object(hass.config_entries, "async_forward_entry_setups", new=AsyncMock()),
         patch.object(hass.config_entries, "async_unload_platforms", new=AsyncMock(return_value=True)),
     ):
